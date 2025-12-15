@@ -1,3 +1,4 @@
+const slugify = require('slugify');
 const express = require('express');
 const Course = require('../models/Course');
 const verifyToken = require('../middlewares/authMiddleware');
@@ -20,6 +21,7 @@ router.post("/create", verifyToken, requireRole("admin", "instructor") ,async (r
       price,
       duration,
       createdBy: req.user.id,
+      slug: slugify(title, { lower: true })
     });
 
     res.status(201).json({
@@ -28,45 +30,6 @@ router.post("/create", verifyToken, requireRole("admin", "instructor") ,async (r
     });
   } catch (error) {
     res.status(500).json({ message: "Error creating course", error: error.message });
-  }
-});
-
-// Get All Courses (Public route - no token required)
-router.get("/", async (req, res) => {
-  try {
-    const courses = await Course.find().populate("createdBy", "name email");
-
-    res.status(200).json({
-      message: "Courses fetched successfully",
-      total: courses.length,
-      courses,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching courses", error: error.message });
-  }
-});
-
-// =============================
-// GET Course by ID (Public)
-// =============================
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const course = await Course.findById(id).populate("createdBy", "name email");
-
-    if (!course) {
-      return res.status(404).json({ message: "Course not found" });
-    }
-
-    res.status(200).json({
-      message: "Course fetched successfully",
-      course,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching the course", error: error.message });
   }
 });
 
@@ -132,6 +95,45 @@ await Course.findByIdAndDelete(courseId);
 
   } catch (error) {
     res.status(500).json({ message: "Error deleting course", error: error.message , error: error.stack });
+  }
+});
+
+// Get All Courses (Public route - no token required)
+router.get("/", async (req, res) => {
+  try {
+    const courses = await Course.find().populate("createdBy", "name email");
+
+    res.status(200).json({
+      message: "Courses fetched successfully",
+      total: courses.length,
+      courses,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching courses", error: error.message });
+  }
+});
+
+// =============================
+// GET Course by ID (Public)
+// =============================
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findById(id).populate("createdBy", "name email");
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json({
+      message: "Course fetched successfully",
+      course,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching the course", error: error.message });
   }
 });
 
